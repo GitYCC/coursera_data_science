@@ -1,0 +1,104 @@
+---
+title: "CourseraPracticeMachineLearning_PredictionAssignment"
+author: "Yi-Chang Chen"
+date: "2016/12/25"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+Sys.setlocale(category = "LC_ALL", locale = "English_United States.1252")
+```
+
+## Background:  
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement ??? a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it.  
+
+In this project, our goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. 
+
+The training data for this project are available here: https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv  
+The test data are available here: https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv  
+The data for this project come from this source: http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset).   
+
+## Data Pre-Processing  
+This human activity recognition research has traditionally focused on discriminating between different activities. The approach we propose for the Weight Lifting Exercises dataset is to investigate "how (well)" an activity was performed by the wearer. Six young health participants were asked to perform one set of 10 repetitions of the Unilateral Dumbbell Biceps Curl in five different fashions: exactly according to the specification (Class A), throwing the elbows to the front (Class B), lifting the dumbbell only halfway (Class C), lowering the dumbbell only halfway (Class D) and throwing the hips to the front (Class E).
+
+In this project, our mission is slitely different. We used data from the wearer to predict which fashion might be taken, traing from train data and testing our prediction model by test data.
+
+At first, load train and test data
+```{r load_data}
+if (!file.exists("data")){
+    dir.create("data")
+}
+if (!file.exists("data/pml-training.csv")) {
+    url <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
+    download.file(url, destfile = "data/pml-training.csv")
+}
+
+if (!file.exists("data/pml-testing.csv")) {
+    url <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
+    download.file(url, destfile = "data/pml-testing.csv")
+}
+
+trainData <- read.csv("./data/pml-training.csv")
+testData  <- read.csv("./data/pml-testing.csv")
+
+dim(trainData)
+```
+In the train dataset, it contains 160 variables and 19622 rows. And we need to rule out below five variables which is used just to identify who and when.
+```{r cleandata1}
+colnames(trainData)[1:5]
+trainData <- trainData[,-(1:5)]
+```
+And then rule out the variables which have NAs a lot (>80%).
+```{r cleandata2}
+haveLotOfNA <- sapply(trainData, function(x) mean(is.na(x))) > 0.80
+trainData <- trainData[,haveLotOfNA==FALSE]
+dim(trainData)
+```
+partition the train data to training part and vaildation part in 70,30 ratio
+```{r cleandata3}
+library(ggplot2)
+library(lattice)
+library(caret)
+forTrainPart  <- createDataPartition(trainData$classe, p=0.7, list=FALSE)
+trainPart      <- trainData[ forTrainPart,]
+vaildationPart <- trainData[-forTrainPart,]
+dim(trainPart)
+```
+To reduce the varables in the training part, we ruled out the variables which have near zero variance that is not so important.
+```{r cleandata4}
+NZV <- nearZeroVar(trainPart)
+trainPart <- trainPart[,-NZV]
+dim(trainPart)
+```
+After clean data, we have 53 variables to predict the last term "classe".
+```{r cleandata5}
+colnames(trainPart)[54]
+```
+
+## Random Forests
+In this project, we used random forests to build our model.  
+```{r rf1}
+library(randomForest)
+set.seed(200)
+TC_RF <- trainControl(method="cv", number=3)
+model_RF <- train(classe~.,data=trainPart, method="rf", trControl=TC_RF)
+model_RF$finalModel
+```
+And use vaildation part to valid the model.
+```{r rf2}
+predictVaildation <- predict(model_RF, newdata=vaildationPart)
+confuseMat <- confusionMatrix(predictVaildation, vaildationPart$classe)
+confuseMat
+```  
+```{r rf3}
+plot(confuseMat$table, col = confuseMat$byClass, main="Confusion Matrix: Random Forest")
+```
+
+## Testing test data
+The accuracy of random forest modeling is 99.59%. And this model is applied to predict the test data.
+```{r test}
+predictTest <- predict(model_RF, newdata=testData)
+predictTest
+```
+

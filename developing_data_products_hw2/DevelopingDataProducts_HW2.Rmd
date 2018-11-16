@@ -1,0 +1,24 @@
+---
+title: "Developing_Data_Products_HW2"
+author: "YCChen"
+date: "2017/4/16"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## March 16, 2017
+
+```{r}
+library(leaflet)
+df <- data.frame(lat = c( 24.771119, 22.611359, 22.626425, 25.017340),
+                 lng = c(121.011210,120.349316,120.265843,121.539752),
+                 popup=c("TSMC","HOME","NSYU","NTU"))
+df %>% 
+  leaflet() %>%
+  addTiles() %>%
+  addMarkers()
+```
+

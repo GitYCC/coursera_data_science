@@ -1,0 +1,35 @@
+---
+title: "Week 3 Assignment"
+author: "YCChen"
+date: "2017/4/22"
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+library(ggplot2)
+library(plotly)
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Loading Data (1/2)
+
+```{r , echo = TRUE}
+data(iris)
+head(iris)
+```
+
+## Loading Data (2/2)
+```{r , echo = TRUE}
+summary(iris)
+```
+
+## Iris
+```{r , echo = TRUE,warning=FALSE,message=FALSE}
+plot_ly(iris,x=~Sepal.Length,y=~Petal.Length,color=~Species)
+```
+
+## Thanks
+My Website: http://www.ycc.idv.tw/coding/
+
+
+

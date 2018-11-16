@@ -1,0 +1,84 @@
+---
+title: 'Developing Data Products Course Project: Shiny Application and Reproducible
+  Pitch'
+author: "YCChen"
+date: "2017/4/28"
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## My APP: Wave Superposition  
+
+Did you know mulit-single waves can combine as a beautiful wave shape?  
+  
+This APP will take a tour of this. 
+  
+We provide 6 kinds of wave with wavelength 0.5 ~ 3 to adjust their amplitude. Final result is superposition of those wave you specify.  
+  
+Try it yourself to create your own beautiful wave.  
+
+APP: [https://gitycc.shinyapps.io/wave_superposition/](https://gitycc.shinyapps.io/wave_superposition/)  
+
+Shiny Source Code: [https://github.com/GitYCC/Coursera_DataScience_  
+DevelopingDataProducts_Project/blob/master/  
+WaveSuperposition/app.R](https://github.com/GitYCC/Coursera_DataScience_DevelopingDataProducts_Project/blob/master/WaveSuperposition/app.R)
+
+## Usage
+
+- adjust bars to select amplitude from -10 ~ 10
+- wavelength we provided are 0.5, 1, 1.5, 2, 2.5 and 3
+- the thick line in plot mean superposition of waves
+- fine lines in plot mean wave elements  
+     * blue line: wavelength = 0.5
+     * orange line: wavelength = 1.0
+     * red line: wavelength = 1.5
+     * green line: wavelength = 2.0
+     * purple line: wavelength = 2.5
+     * brown line: wavelength = 3.0
+
+   
+
+## Code (1/2)
+load shiny liberary and define ui part
+```{r , echo = TRUE}
+library(shiny)
+ui <- fluidPage(
+   titlePanel("Wave Superposition"), # Application title
+   sidebarLayout(    # Sidebar 
+      sidebarPanel(
+         sliderInput("amp_0.5", "Amplitude of wavelength 0.5:",
+                    min = -10, max = 10, value = 0),
+         sliderInput("amp_1", "Amplitude of wavelength 1:",
+                     min = -10, max = 10, value = 10)
+           # ... 
+      ),
+      mainPanel(   # Show a plot 
+         plotOutput("allPlot")
+      )
+   )
+)
+```
+
+## Code (2/2)
+define server part and run APP
+```{r , echo = TRUE, eval=FALSE}
+server <- function(input, output) {
+   output$allPlot <- renderPlot({
+      X <- seq(0,6,0.01)
+      unit_f <- function(x,wavelength,amp){amp*sin(2*pi*x/wavelength)}
+      f <- function(x){ 
+          unit_f(x,0.5,input$amp_0.5) + unit_f(x,1.0,input$amp_1) +
+          unit_f(x,1.5,input$amp_1.5) + unit_f(x,2.0,input$amp_2) +
+          unit_f(x,2.5,input$amp_2.5) + unit_f(x,3.0,input$amp_3) 
+      }
+      plot(X,f(X),type='l',col='black',lwd=4)
+      lines(X,unit_f(X,0.5,input$amp_0.5),type='l',col='blue',lwd=2)
+      # ...
+   })
+}
+shinyApp(ui = ui, server = server) # Run the application 
+```
+
